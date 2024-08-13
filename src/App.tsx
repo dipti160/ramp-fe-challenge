@@ -23,16 +23,32 @@ export function App() {
     setIsLoading(true)
     transactionsByEmployeeUtils.invalidateData()
 
-    await employeeUtils.fetchAll()
-    await paginatedTransactionsUtils.fetchAll()
-
-    setIsLoading(false)
+    try{
+      await employeeUtils.fetchAll()
+      await paginatedTransactionsUtils.fetchAll()
+    }catch(err)
+    {
+      console.log("Failed to load all transaction:", err)
+    }
+    finally{
+      setIsLoading(false)
+    }
   }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
 
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
       paginatedTransactionsUtils.invalidateData()
-      await transactionsByEmployeeUtils.fetchById(employeeId)
+      if(!employeeId || employeeId === EMPTY_EMPLOYEE.id) {
+        return
+        
+      }
+      try{
+
+        await transactionsByEmployeeUtils.fetchById(employeeId)
+      }catch(err)
+      {
+        console.log("Failed to load all transaction:", err) 
+      }
     },
     [paginatedTransactionsUtils, transactionsByEmployeeUtils]
   )
@@ -42,6 +58,20 @@ export function App() {
       loadAllTransactions()
     }
   }, [employeeUtils.loading, employees, loadAllTransactions])
+
+
+  
+
+  const handleEmployeeChange = useCallback(async(newValue:Employee | null)=>{
+    
+    if(newValue === null || newValue.id === EMPTY_EMPLOYEE.id){
+    await loadAllTransactions()
+
+  }
+else{
+  await loadTransactionsByEmployee(newValue.id)
+}
+},[loadAllTransactions, loadTransactionsByEmployee])
 
   return (
     <Fragment>
@@ -60,13 +90,7 @@ export function App() {
             value: item.id,
             label: `${item.firstName} ${item.lastName}`,
           })}
-          onChange={async (newValue) => {
-            if (newValue === null) {
-              return
-            }
-
-            await loadTransactionsByEmployee(newValue.id)
-          }}
+          onChange={handleEmployeeChange}
         />
 
         <div className="RampBreak--l" />

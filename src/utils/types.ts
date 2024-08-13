@@ -13,8 +13,8 @@ export type Employee = {
   lastName: string
 }
 
-export type PaginatedResponse<TData> = {
-  data: TData
+export type PaginatedResponse<T> = {
+  data: T
   nextPage: number | null
 }
 

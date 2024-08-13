@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
 import { InputSelect } from "./components/InputSelect"
 import { Instructions } from "./components/Instructions"
@@ -6,7 +7,7 @@ import { useEmployees } from "./hooks/useEmployees"
 import { usePaginatedTransactions } from "./hooks/usePaginatedTransactions"
 import { useTransactionsByEmployee } from "./hooks/useTransactionsByEmployee"
 import { EMPTY_EMPLOYEE } from "./utils/constants"
-import { Employee } from "./utils/types"
+import { Employee, Transaction } from "./utils/types"
 
 export function App() {
   const { data: employees, ...employeeUtils } = useEmployees()
@@ -23,14 +24,12 @@ export function App() {
     setIsLoading(true)
     transactionsByEmployeeUtils.invalidateData()
 
-    try{
+    try {
       await employeeUtils.fetchAll()
       await paginatedTransactionsUtils.fetchAll()
-    }catch(err)
-    {
-      console.log("Failed to load all transaction:", err)
-    }
-    finally{
+    } catch (err) {
+      console.log("Failed to load all transactions:", err)
+    } finally {
       setIsLoading(false)
     }
   }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
@@ -38,16 +37,13 @@ export function App() {
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
       paginatedTransactionsUtils.invalidateData()
-      if(!employeeId || employeeId === EMPTY_EMPLOYEE.id) {
+      if (!employeeId || employeeId === EMPTY_EMPLOYEE.id) {
         return
-        
       }
-      try{
-
+      try {
         await transactionsByEmployeeUtils.fetchById(employeeId)
-      }catch(err)
-      {
-        console.log("Failed to load all transaction:", err) 
+      } catch (err) {
+        console.log("Failed to load transactions by employee:", err)
       }
     },
     [paginatedTransactionsUtils, transactionsByEmployeeUtils]
@@ -59,19 +55,13 @@ export function App() {
     }
   }, [employeeUtils.loading, employees, loadAllTransactions])
 
-
-  
-
-  const handleEmployeeChange = useCallback(async(newValue:Employee | null)=>{
-    
-    if(newValue === null || newValue.id === EMPTY_EMPLOYEE.id){
-    await loadAllTransactions()
-
-  }
-else{
-  await loadTransactionsByEmployee(newValue.id)
-}
-},[loadAllTransactions, loadTransactionsByEmployee])
+  const handleEmployeeChange = useCallback(async (newValue: Employee | null) => {
+    if (newValue === null || newValue.id === EMPTY_EMPLOYEE.id) {
+      await loadAllTransactions()
+    } else {
+      await loadTransactionsByEmployee(newValue.id)
+    }
+  }, [loadAllTransactions, loadTransactionsByEmployee])
 
   return (
     <Fragment>
@@ -103,7 +93,7 @@ else{
               className="RampButton"
               disabled={paginatedTransactionsUtils.loading}
               onClick={async () => {
-                await loadAllTransactions()
+                await paginatedTransactionsUtils.fetchAll()
               }}
             >
               View More

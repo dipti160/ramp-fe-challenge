@@ -6,13 +6,14 @@ import { useEmployees } from "./hooks/useEmployees"
 import { usePaginatedTransactions } from "./hooks/usePaginatedTransactions"
 import { useTransactionsByEmployee } from "./hooks/useTransactionsByEmployee"
 import { EMPTY_EMPLOYEE } from "./utils/constants"
-import { Employee } from "./utils/types"
+import { Employee, Transaction } from "./utils/types"
 
 export function App() {
   const { data: employees, loading: employeesLoading, ...employeeUtils } = useEmployees()
   const {
     data: paginatedTransactions,
     loading: transactionsLoading,
+    hasMoreData, // Now properly typed
     ...paginatedTransactionsUtils
   } = usePaginatedTransactions()
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } = useTransactionsByEmployee()
@@ -22,6 +23,10 @@ export function App() {
     () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
     [paginatedTransactions, transactionsByEmployee]
   )
+
+  const showViewMoreButton = useMemo(() => {
+    return !transactionsByEmployee && hasMoreData
+  }, [transactionsByEmployee, hasMoreData])
 
   const loadAllTransactions = useCallback(async () => {
     setIsLoading(true)
@@ -94,7 +99,7 @@ export function App() {
         <div className="RampGrid">
           <Transactions transactions={transactions} />
 
-          {transactions !== null && (
+          {showViewMoreButton && (
             <button
               className="RampButton"
               disabled={transactionsLoading}

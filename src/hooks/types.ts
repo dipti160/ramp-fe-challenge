@@ -14,10 +14,12 @@ type UseTypeBaseByIdResult<TValue> = UseTypeBaseResult<TValue> & {
   fetchById: (id: string) => Promise<void>
 }
 
-
-
 export type EmployeeResult = UseTypeBaseAllResult<Employee[] | null>
 
-export type PaginatedTransactionsResult = UseTypeBaseAllResult<PaginatedResponse<Transaction[]> | null>
+export type PaginatedTransactionsResult = UseTypeBaseAllResult<PaginatedResponse<
+  Transaction[]
+> | null> & {
+  hasMoreData: boolean
+}
 
 export type TransactionsByEmployeeResult = UseTypeBaseByIdResult<Transaction[] | null>

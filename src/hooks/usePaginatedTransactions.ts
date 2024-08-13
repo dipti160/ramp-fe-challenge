@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { PaginatedRequestParams, PaginatedResponse, Transaction } from "../utils/types"
 import { PaginatedTransactionsResult } from "./types"
 import { useCustomFetch } from "./useCustomFetch"
@@ -43,5 +43,9 @@ export function usePaginatedTransactions(): PaginatedTransactionsResult {
     setPaginatedTransactions(null)
   }, [])
 
-  return { data: paginatedTransactions, loading, fetchAll, invalidateData }
+  const hasMoreData = useMemo(() => {
+    return paginatedTransactions?.nextPage !== null
+  }, [paginatedTransactions])
+
+  return { data: paginatedTransactions, loading, fetchAll, invalidateData, hasMoreData }
 }

@@ -1,16 +1,23 @@
-
 import { useCallback, useState } from "react"
 import { Employee } from "../utils/types"
 import { useCustomFetch } from "./useCustomFetch"
 import { EmployeeResult } from "./types"
 
 export function useEmployees(): EmployeeResult {
-  const { fetchWithCache, loading } = useCustomFetch()
+  const { fetchWithCache, loading: fetchLoading } = useCustomFetch()
   const [employees, setEmployees] = useState<Employee[] | null>(null)
+  const [loading, setLoading] = useState<boolean>(fetchLoading)
 
   const fetchAll = useCallback(async () => {
-    const employeesData = await fetchWithCache<Employee[]>("employees")
-    setEmployees(employeesData)
+    setLoading(true)
+    try {
+      const employeesData = await fetchWithCache<Employee[]>("employees")
+      setEmployees(employeesData)
+    } catch (err) {
+      console.log("Failed to fetch employees:", err)
+    } finally {
+      setLoading(false)
+    }
   }, [fetchWithCache])
 
   const invalidateData = useCallback(() => {

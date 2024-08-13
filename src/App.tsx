@@ -6,23 +6,32 @@ import { useEmployees } from "./hooks/useEmployees"
 import { usePaginatedTransactions } from "./hooks/usePaginatedTransactions"
 import { useTransactionsByEmployee } from "./hooks/useTransactionsByEmployee"
 import { EMPTY_EMPLOYEE } from "./utils/constants"
-import { Employee, Transaction } from "./utils/types"
+import { Employee, Transaction, SetTransactionApprovalParams } from "./utils/types"
+import { useCustomFetch } from "./hooks/useCustomFetch"
 
 export function App() {
   const { data: employees, loading: employeesLoading, ...employeeUtils } = useEmployees()
   const {
     data: paginatedTransactions,
     loading: transactionsLoading,
-    hasMoreData, // Now properly typed
+    hasMoreData,
     ...paginatedTransactionsUtils
   } = usePaginatedTransactions()
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } = useTransactionsByEmployee()
   const [isLoading, setIsLoading] = useState(false)
+  const [transactionApprovalState, setTransactionApprovalState] = useState<Record<string, boolean>>({})
 
-  const transactions = useMemo(
-    () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
-    [paginatedTransactions, transactionsByEmployee]
-  )
+  const { fetchWithoutCache } = useCustomFetch() // Ensure fetchWithoutCache is available
+
+  const transactions = useMemo(() => {
+    const transactionList = paginatedTransactions?.data ?? transactionsByEmployee ?? null
+    return (
+      transactionList?.map((transaction) => ({
+        ...transaction,
+        approved: transactionApprovalState[transaction.id] ?? transaction.approved,
+      })) ?? null
+    )
+  }, [paginatedTransactions, transactionsByEmployee, transactionApprovalState])
 
   const showViewMoreButton = useMemo(() => {
     return !transactionsByEmployee && hasMoreData
@@ -74,6 +83,24 @@ export function App() {
     [loadAllTransactions, loadTransactionsByEmployee]
   )
 
+  const handleTransactionApproval = useCallback(
+    async (transactionId: string, newValue: boolean) => {
+      setTransactionApprovalState((prev) => ({
+        ...prev,
+        [transactionId]: newValue,
+      }))
+      try {
+        await fetchWithoutCache<void, SetTransactionApprovalParams>("setTransactionApproval", {
+          transactionId,
+          value: newValue,
+        })
+      } catch (err) {
+        console.log("Failed to update transaction approval:", err)
+      }
+    },
+    [fetchWithoutCache]
+  )
+
   return (
     <Fragment>
       <main className="MainContainer">
@@ -97,7 +124,7 @@ export function App() {
         <div className="RampBreak--l" />
 
         <div className="RampGrid">
-          <Transactions transactions={transactions} />
+          <Transactions transactions={transactions} onTransactionApproval={handleTransactionApproval} />
 
           {showViewMoreButton && (
             <button

@@ -30,3 +30,10 @@ export type SetTransactionApprovalParams = {
   transactionId: string
   value: boolean
 }
+
+export interface TransactionsProps {
+  transactions: Transaction[] | null
+  onTransactionApproval: (transactionId: string, newValue: boolean) => Promise<void>
+}
+
+export type TransactionsComponent = React.FC<TransactionsProps>
